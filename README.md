@@ -1,6 +1,6 @@
 # Project
 
-Welcome to the MSSQL-Django 3rd party backend project!
+Welcome to the azure-msi-mssql-django 3rd party backend project!
 
 *mssql-django* is a fork of [django-mssql-backend](https://pypi.org/project/django-mssql-backend/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
 
@@ -27,7 +27,7 @@ We hope you enjoy using the MSSQL-Django 3rd party backend.
 1. Install pyodbc 3.0 (or newer) and Django
 2. Install mssql-django:
 
-       pip install mssql-django
+       pip install azure-msi-mssql-django
 
 3. Set the `ENGINE` setting in the `settings.py` file used by
    your Django application or project to `'mssql'`:
@@ -194,27 +194,46 @@ The following project-level settings also control the behavior of the backend:
 
 ### Example
 
-Here is an example of the database settings:
 
-```python
+Here is an example of the database settings for **azure token**:
+
+
+
     DATABASES = {
         'default': {
-            'ENGINE': 'mssql',
+            'ENGINE': 'sql_server.pyodbc',
+            'NAME': 'mydb',
+            'HOST': 'myserver.database.windows.net',
+            'PORT': '',
+            'IS_AZURE_BASED_TOKEN': True,
+            'OPTIONS': {
+                'driver': 'ODBC Driver 13 for SQL Server',
+            },
+        },
+    }
+
+If you are using a **local SQL server**, use the below configuration.
+
+
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'sql_server.pyodbc',
             'NAME': 'mydb',
             'USER': 'user@myserver',
             'PASSWORD': 'password',
             'HOST': 'myserver.database.windows.net',
             'PORT': '',
+            'IS_AZURE_BASED_TOKEN': False,
 
             'OPTIONS': {
-                'driver': 'ODBC Driver 17 for SQL Server',
+                'driver': 'ODBC Driver 13 for SQL Server',
             },
         },
     }
 
     # set this to False if you want to turn off pyodbc's connection pooling
     DATABASE_CONNECTION_POOLING = False
-```
 
 ## Limitations
 
