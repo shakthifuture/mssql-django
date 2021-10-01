@@ -7,6 +7,8 @@ MS SQL Server database backend for Django.
 import os
 import re
 import time
+import struct
+import requests
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -236,6 +238,17 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         return conn
 
+    def get_bearer_token(self, resource_uri):
+        identity_endpoint = os.environ["IDENTITY_ENDPOINT"]
+        identity_header = os.environ["IDENTITY_HEADER"]
+        token_auth_uri = f"{identity_endpoint}?resource={resource_uri}&api-version=2019-08-01"
+        head_msi = {'X-IDENTITY-HEADER': identity_header}
+
+        resp = requests.get(token_auth_uri, headers=head_msi)
+        access_token = resp.json()['access_token']
+
+        return access_token
+
     def get_connection_params(self):
         settings_dict = self.settings_dict
         if settings_dict['NAME'] == '':
@@ -253,6 +266,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         user = conn_params.get('USER', None)
         password = conn_params.get('PASSWORD', None)
         port = conn_params.get('PORT', None)
+        is_azure_based_token = conn_params.get('IS_AZURE_BASED_TOKEN', None)
         trusted_connection = conn_params.get('Trusted_Connection', 'yes')
 
         options = conn_params.get('OPTIONS', {})
@@ -289,7 +303,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             else:
                 cstr_parts['SERVERNAME'] = host
 
-        if user:
+        if is_azure_based_token is not None and is_azure_based_token is True:
+            access_token = bytes(self.get_bearer_token("https://database.windows.net/"), 'utf-8')
+            exp_token = b""
+            for i in access_token:
+                exp_token += bytes({i})
+                exp_token += bytes(1)
+            token_struct = struct.pack("=i", len(exp_token)) + exp_token
+        elif user:
             cstr_parts['UID'] = user
             if 'Authentication=ActiveDirectoryInteractive' not in options.get('extra_params', ''):
                 cstr_parts['PWD'] = password
@@ -323,9 +344,15 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         need_to_retry = False
         while conn is None:
             try:
-                conn = Database.connect(connstr,
-                                        unicode_results=unicode_results,
-                                        timeout=timeout)
+                if is_azure_based_token is not None and is_azure_based_token is True:
+                    conn = Database.connect(connstr,
+                                            attrs_before={1256: bytearray(token_struct)},
+                                            unicode_results=unicode_results,
+                                            timeout=timeout)
+                else:
+                    conn = Database.connect(connstr,
+                                            unicode_results=unicode_results,
+                                            timeout=timeout)
             except Exception as e:
                 for error_number in self._transient_error_numbers:
                     if error_number in e.args[1]:

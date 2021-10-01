@@ -26,16 +26,16 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='mssql-django',
-    version='1.0',
-    description='Django backend for Microsoft SQL Server',
+    name='azure-msi-mssql-django',
+    version='1.5',
+    description='Django backend for Microsoft SQL Server with Azure MSI',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    author='Microsoft',
-    author_email='opencode@microsoft.com',
-    url='https://github.com/microsoft/mssql-django',
+    author='Sathiamoorthy M',
+    author_email='shakthifuture@gmail.com',
+    url='https://github.com/shakthifuture/mssql-django',
     project_urls={
-    'Release Notes': 'https://github.com/microsoft/mssql-django/releases',
+    'Release Notes': 'https://github.com/shakthifuture/mssql-django/releases',
     },
     license='BSD',
     packages=find_packages(),
@@ -43,6 +43,7 @@ setup(
         'django>=2.2,<3.3',
         'pyodbc>=3.0',
         'pytz',
+        'requests>=2.24.0'
     ],
     package_data={'mssql': ['regex_clr.dll']},
     classifiers=CLASSIFIERS,
