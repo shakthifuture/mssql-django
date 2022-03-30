@@ -2,7 +2,7 @@
 
 Welcome to the azure-msi-mssql-django 3rd party backend project!
 
-*mssql-django* is a fork of [django-mssql-backend](https://pypi.org/project/django-mssql-backend/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
+*mssql-django* is a fork of [mssql-django](https://pypi.org/project/mssql-django/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
 
 We'd like to give thanks to the community that made this project possible, with particular recognition of the contributors: OskarPersson, michiya, dlo and the original Google Code django-pyodbc team. Moving forward we encourage partipation in this project from both old and new contributors!
 
@@ -228,7 +228,7 @@ Here is an example of the database settings for **azure token**:
             'PORT': '',
             'IS_AZURE_BASED_TOKEN': True,
             'OPTIONS': {
-                'driver': 'ODBC Driver 13 for SQL Server',
+                'driver': 'ODBC Driver 17 for SQL Server',
             },
         },
     }
@@ -248,7 +248,7 @@ If you are using a **local SQL server**, use the below configuration.
             'IS_AZURE_BASED_TOKEN': False,
 
             'OPTIONS': {
-                'driver': 'ODBC Driver 13 for SQL Server',
+                'driver': 'ODBC Driver 17 for SQL Server',
             },
         },
     }
