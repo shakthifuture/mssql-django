@@ -19,6 +19,7 @@ CLASSIFIERS = [
     'Framework :: Django :: 3.0',
     'Framework :: Django :: 3.1',
     'Framework :: Django :: 3.2',
+    'Framework :: Django :: 4.0',
 ]
 
 this_directory = path.abspath(path.dirname(__file__))
@@ -40,7 +41,7 @@ setup(
     license='BSD',
     packages=find_packages(),
     install_requires=[
-        'django>=2.2,<3.3',
+        'django>=2.2,<4.1',
         'pyodbc>=3.0',
         'pytz',
         'requests>=2.24.0'

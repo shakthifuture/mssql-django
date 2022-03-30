@@ -62,7 +62,8 @@ class DatabaseOperations(BaseDatabaseOperations):
         # up 2 parameters but I've had this error when sending 2098 parameters.
         max_query_params = 2050
         # inserts are capped at 1000 rows regardless of number of query params.
-        return min(max_insert_rows, max_query_params // fields_len)
+        # bulk_update CASE...WHEN...THEN statement sometimes takes 2 parameters per field
+        return min(max_insert_rows, max_query_params // fields_len // 2)
 
     def bulk_insert_sql(self, fields, placeholder_rows):
         placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
@@ -186,6 +187,24 @@ class DatabaseOperations(BaseDatabaseOperations):
         elif lookup_type == 'second':
             sql = "CONVERT(datetime2, CONVERT(varchar, %s, 20))" % field_name
         return sql
+
+    def fetch_returned_insert_rows(self, cursor):
+        """
+        Given a cursor object that has just performed an INSERT...OUTPUT INSERTED
+        statement into a table, return the list of returned data.
+        """
+        return cursor.fetchall()
+
+    def return_insert_columns(self, fields):
+        if not fields:
+            return '', ()
+        columns = [
+            '%s.%s' % (
+                'INSERTED',
+                self.quote_name(field.column),
+            ) for field in fields
+        ]
+        return 'OUTPUT %s' % ', '.join(columns), ()
 
     def for_update_sql(self, nowait=False, skip_locked=False, of=()):
         if skip_locked:
@@ -349,6 +368,7 @@ class DatabaseOperations(BaseDatabaseOperations):
             return [
                 sequence
                 for sequence in self.connection.introspection.sequence_list()
+                if sequence['table'].lower() in [table.lower() for table in tables]
             ]
 
         return []

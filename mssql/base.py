@@ -8,7 +8,6 @@ import os
 import re
 import time
 import struct
-import requests
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -55,7 +54,22 @@ def encode_connection_string(fields):
         '%s=%s' % (k, encode_value(v))
         for k, v in fields.items()
     )
+def prepare_token_for_odbc(token):
+    """
+    Will prepare token for passing it to the odbc driver, as it expects
+    bytes and not a string
+    :param token:
+    :return: packed binary byte representation of token string
+    """
+    if not isinstance(token, str):
+        raise TypeError("Invalid token format provided.")
 
+    tokenstr = token.encode()
+    exptoken = b""
+    for i in tokenstr:
+        exptoken += bytes({i})
+        exptoken += bytes(1)
+    return struct.pack("=i", len(exptoken)) + exptoken
 
 def encode_value(v):
     """If the value contains a semicolon, or starts with a left curly brace,
@@ -272,6 +286,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         options = conn_params.get('OPTIONS', {})
         driver = options.get('driver', 'ODBC Driver 17 for SQL Server')
         dsn = options.get('dsn', None)
+        options_extra_params = options.get('extra_params', '')
 
         # Microsoft driver names assumed here are:
         # * SQL Server Native Client 10.0/11.0
@@ -312,10 +327,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             token_struct = struct.pack("=i", len(exp_token)) + exp_token
         elif user:
             cstr_parts['UID'] = user
-            if 'Authentication=ActiveDirectoryInteractive' not in options.get('extra_params', ''):
+            if 'Authentication=ActiveDirectoryInteractive' not in options_extra_params:
                 cstr_parts['PWD'] = password
-        else:
-            if ms_drivers.match(driver):
+        elif 'TOKEN' not in conn_params:
+            if ms_drivers.match(driver) and 'Authentication=ActiveDirectoryMsi' not in options_extra_params:
                 cstr_parts['Trusted_Connection'] = trusted_connection
             else:
                 cstr_parts['Integrated Security'] = 'SSPI'
@@ -338,10 +353,20 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         retries = options.get('connection_retries', 5)
         backoff_time = options.get('connection_retry_backoff_time', 5)
         query_timeout = options.get('query_timeout', 0)
+        setencoding = options.get('setencoding', None)
+        setdecoding = options.get('setdecoding', None)
 
         conn = None
         retry_count = 0
         need_to_retry = False
+        args = {
+            'unicode_results': unicode_results,
+            'timeout': timeout,
+        }
+        if 'TOKEN' in conn_params:
+            args['attrs_before'] = {
+                1256: prepare_token_for_odbc(conn_params['TOKEN'])
+            }
         while conn is None:
             try:
                 if is_azure_based_token is not None and is_azure_based_token is True:
@@ -367,6 +392,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                     raise
 
         conn.timeout = query_timeout
+        if setencoding:
+            for entry in setencoding:
+                conn.setencoding(**entry)
+        if setdecoding:
+            for entry in setdecoding:
+                conn.setdecoding(**entry)
         return conn
 
     def init_connection_state(self):
