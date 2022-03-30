@@ -1,8 +1,8 @@
-# Project
+# SQL Server backend for Django
 
-Welcome to the MSSQL-Django 3rd party backend project!
+Welcome to the azure-msi-mssql-django 3rd party backend project!
 
-*mssql-django* is a fork of [django-mssql-backend](https://pypi.org/project/django-mssql-backend/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
+*mssql-django* is a fork of [mssql-django](https://pypi.org/project/mssql-django/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
 
 We'd like to give thanks to the community that made this project possible, with particular recognition of the contributors: OskarPersson, michiya, dlo and the original Google Code django-pyodbc team. Moving forward we encourage partipation in this project from both old and new contributors!
 
@@ -10,7 +10,7 @@ We hope you enjoy using the MSSQL-Django 3rd party backend.
 
 ## Features
 
--  Supports Django 2.2, 3.0, 3.1 and 3.2
+-  Supports Django 2.2, 3.0, 3.1, 3.2 and 4.0
 -  Tested on Microsoft SQL Server 2016, 2017, 2019
 -  Passes most of the tests of the Django test suite
 -  Compatible with
@@ -27,7 +27,7 @@ We hope you enjoy using the MSSQL-Django 3rd party backend.
 1. Install pyodbc 3.0 (or newer) and Django
 2. Install mssql-django:
 
-       pip install mssql-django
+       pip install azure-msi-mssql-django
 
 3. Set the `ENGINE` setting in the `settings.py` file used by
    your Django application or project to `'mssql'`:
@@ -66,6 +66,13 @@ in DATABASES control the behavior of the backend:
 -  PASSWORD
 
    String. Database user password.
+
+-  TOKEN
+
+   String. Access token fetched as a user or service principal which
+   has access to the database. E.g. when using `azure.identity`, the
+   result of `DefaultAzureCredential().get_token('https://database.windows.net/.default')`
+   can be passed.
 
 -  AUTOCOMMIT
 
@@ -153,7 +160,7 @@ Dictionary. Current available keys are:
 -  extra_params
 
    String. Additional parameters for the ODBC connection. The format is
-   ``"param=value;param=value"``, [Azure AD Authentication](https://github.com/microsoft/mssql-django/wiki/Azure-AD-Authentication) can be added to this field.
+   ``"param=value;param=value"``, [Azure AD Authentication](https://github.com/microsoft/mssql-django/wiki/Azure-AD-Authentication) (Service Principal, Interactive, Msi) can be added to this field.
 
 -  collation
 
@@ -183,6 +190,20 @@ Dictionary. Current available keys are:
    Integer. Sets the timeout in seconds for the database query.
    Default value is ``0`` which disables the timeout.
 
+- [setencoding](https://github.com/mkleehammer/pyodbc/wiki/Connection#setencoding) and [setdecoding](https://github.com/mkleehammer/pyodbc/wiki/Connection#setdecoding)
+
+    ```python
+    # Example
+    "OPTIONS": {
+            "setdecoding": [
+                {"sqltype": pyodbc.SQL_CHAR, "encoding": 'utf-8'},
+                {"sqltype": pyodbc.SQL_WCHAR, "encoding": 'utf-8'}],
+            "setencoding": [
+                {"encoding": "utf-8"}],
+            ...
+            },
+    ```
+
 ### Backend-specific settings
 
 The following project-level settings also control the behavior of the backend:
@@ -194,17 +215,37 @@ The following project-level settings also control the behavior of the backend:
 
 ### Example
 
-Here is an example of the database settings:
 
-```python
+Here is an example of the database settings for **azure token**:
+
+
+
     DATABASES = {
         'default': {
-            'ENGINE': 'mssql',
+            'ENGINE': 'sql_server.pyodbc',
+            'NAME': 'mydb',
+            'HOST': 'myserver.database.windows.net',
+            'PORT': '',
+            'IS_AZURE_BASED_TOKEN': True,
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+            },
+        },
+    }
+
+If you are using a **local SQL server**, use the below configuration.
+
+
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'sql_server.pyodbc',
             'NAME': 'mydb',
             'USER': 'user@myserver',
             'PASSWORD': 'password',
             'HOST': 'myserver.database.windows.net',
             'PORT': '',
+            'IS_AZURE_BASED_TOKEN': False,
 
             'OPTIONS': {
                 'driver': 'ODBC Driver 17 for SQL Server',
@@ -214,7 +255,6 @@ Here is an example of the database settings:
 
     # set this to False if you want to turn off pyodbc's connection pooling
     DATABASE_CONNECTION_POOLING = False
-```
 
 ## Limitations
 
@@ -225,7 +265,6 @@ The following features are currently not fully supported:
 - Exists function in order_by
 - Righthand power and arithmetic with datatimes
 - Timezones, timedeltas not fully supported
-- `bulk_update` multiple field to null
 - Rename field/model with foreign key constraint
 - Database level constraints
 - Math degrees power or radians
