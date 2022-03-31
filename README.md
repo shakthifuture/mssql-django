@@ -2,11 +2,11 @@
 
 Welcome to the azure-msi-mssql-django 3rd party backend project!
 
-*mssql-django* is a fork of [mssql-django](https://pypi.org/project/mssql-django/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
+*azure-msi-mssql-django* is a fork of [mssql-django](https://pypi.org/project/mssql-django/). This project provides an enterprise database connectivity option for the Django Web Framework, with support for Microsoft SQL Server and Azure SQL Database.
 
 We'd like to give thanks to the community that made this project possible, with particular recognition of the contributors: OskarPersson, michiya, dlo and the original Google Code django-pyodbc team. Moving forward we encourage partipation in this project from both old and new contributors!
 
-We hope you enjoy using the MSSQL-Django 3rd party backend.
+We hope you enjoy using the azure-msi-mssql-django 3rd party backend.
 
 ## Features
 
@@ -25,7 +25,7 @@ We hope you enjoy using the MSSQL-Django 3rd party backend.
 ## Installation
 
 1. Install pyodbc 3.0 (or newer) and Django
-2. Install mssql-django:
+2. Install azure-msi-mssql-django:
 
        pip install azure-msi-mssql-django
 

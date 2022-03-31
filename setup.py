@@ -28,7 +28,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='azure-msi-mssql-django',
-    version='1.7',
+    version='1.8',
     description='Django backend for Microsoft SQL Server with Azure MSI',
     long_description=long_description,
     long_description_content_type='text/markdown',

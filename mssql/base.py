@@ -8,6 +8,7 @@ import os
 import re
 import time
 import struct
+import requests
 
 from django.core.exceptions import ImproperlyConfigured
 
